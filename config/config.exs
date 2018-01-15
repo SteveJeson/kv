@@ -52,9 +52,9 @@ config :libcluster,
          ]
        ]
 
-config :maru, Router.Homepage,
-       http: [port: 8880]
+config :maru, KV.API,
+       http: [port: 8890]
 
 # config/test.exs
-config :maru, Router.Homepage,
+config :maru, KV.API,
        test: true
