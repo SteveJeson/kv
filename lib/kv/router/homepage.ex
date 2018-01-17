@@ -1,26 +1,29 @@
 defmodule Router.User do
   use Maru.Router
 
-  namespace :user do
-    route_param :id do
-#      get do
-#        json(conn, %{ user: params[:id] })
-#      end
+  require Logger
 
-      desc "description"
-      params do
-        requires :age,    type: Integer, values: 18..65
-        requires :gender, type: Atom, values: [:male, :female], default: :female
+  params do
+    requires :code,    type: String #电子围栏编码
+    requires :deviceCodes, type: String #设备ID
+    requires :interval, type: Integer #运行时间间隔
+  end
 
-        optional :intro,  type: String, regexp: ~r/^[a-z]+$/
-        optional :avatar, type: File
-        optional :avatar_url, type: String
-        exactly_one_of [:avatar, :avatar_url]
-      end
-      post do
-        json(conn, conn.params)
-      end
-    end
+  post "startEfence" do
+    arr = String.split(conn.params["deviceCodes"], ",")
+    Logger.info(Enum.take(arr, -1))
+
+    json(conn, %{ success: true,
+      statusCode: 1,
+      message: "启动电子围栏成功！",
+      data: params[:code]})
+  end
+
+  post "stopEfence" do
+    json(conn, %{ success: true,
+      statusCode: 1,
+      message: "已成功停止电子围栏！",
+      data: conn.params})
   end
 end
 
@@ -39,38 +42,19 @@ end
 
 defmodule KV.API do
   use Maru.Router
-
-  before do
-    plug Plug.Logger
-    plug Plug.Static, at: "/static", from: "/my/static/path/"
-  end
+  require Logger
 
   plug Plug.Parsers,
        pass: ["*/*"],
        json_decoder: Poison,
-       parsers: [:urlencoded, :json, :multipart]
-
+       parsers: [:urlencoded, :json, :multipart],
+       length: 100_000_000_000
   mount Router.Homepage
 
-  rescue_from Unauthorized, as: e do
-    IO.inspect e
-
+  rescue_from :all, as: e do
     conn
-    |> put_status(401)
-    |> text("Unauthorized")
-  end
-
-  rescue_from [MatchError, RuntimeError], with: :custom_error
-
-#  rescue_from :all, as: e do
-#    conn
-#    |> put_status(Plug.Exception.status(e))
-#    |> text("Server Error")
-#  end
-
-  defp custom_error(conn, exception) do
-    conn
-    |> put_status(500)
-    |> text(exception.message)
+    |> put_status(Plug.Exception.status(e))
+    |> Logger.info(e.message)
+    |> text("server error")
   end
 end

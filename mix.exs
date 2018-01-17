@@ -30,6 +30,7 @@ defmodule KV.Mixfile do
       {:maru, "~> 0.12"},
       # Optional dependency for runtime configuration loading.
       {:confex, "~> 3.3"},
+      {:poolboy, "~> 1.5.1"},
     ]
   end
 end
